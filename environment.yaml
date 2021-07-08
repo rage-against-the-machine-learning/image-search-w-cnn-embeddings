@@ -1,0 +1,10 @@
+name: cs7643-raml
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - numpy
+  - matplotlib
+  - pyyaml
+  - pytorch==1.8.1
+  - torchvision
