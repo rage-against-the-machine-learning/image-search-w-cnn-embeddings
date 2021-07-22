@@ -10,7 +10,7 @@ NOTE: If you are working on a separate branch and make any additional pip instal
 2. [Sync your Jupyter Kernel up with your environment](https://janakiev.com/blog/jupyter-virtual-envs/)
 ```angular2html
 $ pip install ipykernel
-$ python -m ipykernel install --user --name=cs7643
+$ python -m ipykernel install --user --name=cs7643-raml
 ```
 3. Launch Jupyter Notebook
 ```angular2html
