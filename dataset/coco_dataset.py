@@ -1,11 +1,8 @@
-import torchvision
 import albumentations as alb
-from albumentations.pytorch import ToTensor, ToTensorV2
+# from albumentations.pytorch import ToTensor, ToTensorV2
 import numpy as np
 import cv2
 
-
-torch.seed(42)
 
 def resize_and_pad_img(img: np.ndarray, img_size: int = 224):
     """
@@ -35,11 +32,3 @@ def normalize_img(img: np.ndarray):
     subtracting the mean and dividing by std deviation
     """
     return alb.Normalize(always_apply=True)(image=img).get('image')
-
-def img_to_tensor(img: np.ndarray):
-    """
-    :param img: np image input
-    :return: tensor representation of image
-    """
-    return alb.pytorch.ToTensorV2()(image=img).get('image')
-
