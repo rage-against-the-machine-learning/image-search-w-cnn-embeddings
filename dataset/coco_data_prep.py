@@ -1,7 +1,16 @@
+import json
+import sys
+
 import albumentations as alb
-# from albumentations.pytorch import ToTensor, ToTensorV2
-import numpy as np
 import cv2
+import numpy as np
+
+sys.path.append('../')
+import aws_helper
+
+
+with open('./categories.json', 'r') as f:
+    categories_of_interest = json.load(f)
 
 
 def resize_and_pad_img(img: np.ndarray, img_size: int = 224):
@@ -25,6 +34,7 @@ def resize_and_pad_img(img: np.ndarray, img_size: int = 224):
     )
     return resize_and_pad_transform(image=img).get('image')
 
+
 def normalize_img(img: np.ndarray):
     """
     :param img: input image as np array
@@ -32,3 +42,5 @@ def normalize_img(img: np.ndarray):
     subtracting the mean and dividing by std deviation
     """
     return alb.Normalize(always_apply=True)(image=img).get('image')
+
+def main():
