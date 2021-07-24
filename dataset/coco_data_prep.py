@@ -1,6 +1,7 @@
 import json
 import multiprocessing as mp
 import os
+from pathlib import Path
 import shutil
 import sys
 
@@ -21,13 +22,14 @@ with open('../dataset/categories.json', 'r') as f:
 # if 'api' is passed, then all images are retrieved from API
 # otherwise 'local' means all images will be fetched from local machine
 fetch_imgs_locally_or_api = 'local'
-local_img_directory = '../data/raw/coco/images/'
+local_img_directory = '../data/raw/train/train2014/'
 
 num_cpus = 4
 batch_size = 250
 
-s3_bucket = 'cs7643-raml'
+s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
+local_np_dir = '../data/numpy_images/train/'
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
 def resize_and_pad_img(img: np.ndarray, img_size: int = 224):
@@ -89,26 +91,28 @@ def main():
         pool.close()
 
         print('Saving numpy images locally into temp directory...')
-        if not os.path.exists('./tmp/'):
-            os.makedirs('./tmp/')
+        if not os.path.exists(local_np_dir):
+            os.makedirs(local_np_dir)
 
         filename_slice = filenames[i: i + batch_size]
         np_filenames = [f"{fn.split('.')[0]}.np" for fn in filename_slice]
-        process_paths = [f"./tmp/{npfn}" for npfn in tqdm(np_filenames)]
+        process_paths = [f"{local_np_dir}{npfn}" for npfn in tqdm(np_filenames)]
 
         for np_img, np_filepath in zip(normed, process_paths):
             with open(np_filepath, 'wb') as p:
                 np.save(p, np_img, allow_pickle=True)
 
-        print('Writing files to s3 bucket...')
-        for path in tqdm(process_paths):
-            np_filename = path.split('/')[-1]
-            np_img = np.load(path)
-            s3_keypath = f"{s3_key_prefix}/{np_filename}"
-            awsh.upload_np_to_s3(s3_bucket, s3_keypath, np_img)
+        if s3_bucket is not None:
+            print('Writing files to s3 bucket...')
+            for path in tqdm(process_paths):
+                np_filename = path.split('/')[-1]
+                np_img = np.load(path)
+                s3_keypath = f"{s3_key_prefix}/{np_filename}"
+                awsh.upload_np_to_s3(s3_bucket, s3_keypath, np_img)
 
-        print('Resetting ./tmp/ directory')
-        shutil.rmtree('./tmp/')
+            print('Resetting ./tmp/ directory')
+            shutil.rmtree('./tmp/')
+            
         i += batch_size
 
 
