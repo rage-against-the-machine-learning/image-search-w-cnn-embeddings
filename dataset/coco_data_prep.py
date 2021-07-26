@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
+from torch.utils.data import Dataset, DataLoader
 
 sys.path.append('../src/')
 import aws_helper as awsh
