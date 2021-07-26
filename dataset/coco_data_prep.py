@@ -9,11 +9,10 @@ import albumentations as alb
 import cv2
 import numpy as np
 import torch
-from torch.utils.data import Dataset
-from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
+from tqdm import tqdm
 
-sys.path.append('../src/')
+sys.path.append('../utils/')
 import aws_helper as awsh
 
 
