@@ -1,7 +1,6 @@
 import json
 import multiprocessing as mp
 import os
-from pathlib import Path
 import shutil
 import sys
 
@@ -120,10 +119,11 @@ class COCODataset(Dataset):
             print('Converting jpg images to np images')
             np_imgs = [pool.apply(jpg_image_to_np_array, args=([jpg_file])) for jpg_file in tqdm(os.listdir(self.data_dir))]
             print('Resizing and padding np images')
-            resized = [pool.apply(resize_and_pad_img, args=([np_img])) for np_img in tqdm(np_images)]
+            resized = [pool.apply(resize_and_pad_img, args=([np_img])) for np_img in tqdm(np_imgs)]
             print('Normalizing images')
             normed = [pool.apply(normalize_img, args=([res])) for res in tqdm(resized)]
             pool.close()
+            self.dataset = normed
 
         else:
             raise ValueError('file type in data_dir must be np or jpg.')
