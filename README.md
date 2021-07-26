@@ -29,8 +29,8 @@ $ jupyter notebook
 │   ├── __init__.py
 │   ├── categories.json
 │   ├── coco_api_helper.py
-│   ├── coco_data_prep.py
-│   ├── config_dataset.py
+│   ├── coco_data_prep.py.  <-- create torch.utils.data Dataset object compatible with DataLoader
+│   ├── config_dataset.py
 ├── docs                    <-- relevant academic papers
 │   └── Deep-Image-Retrieval-ASurvey-2101.11282.pdf
 ├── environment.yaml
