@@ -78,11 +78,14 @@ def jpg_image_to_np_array(jpg_filepath) -> np.ndarray:
 
 class COCODataset(Dataset):
 
-    def __init__(self, data_dir: str, sample_ratio: int = None):
+    def __init__(self, data_dir: str, sample_ratio: int = None, randomize: bool = True):
         """
         :data_dir: data directory where images are stored (should be training or validation directory)
         :sample_ratio: if training, a % of the total training/validation data you wish to try your model on
             default is None, which means use all of the training or validation images in the specified data_dir
+        :randomize: default is True
+            when a sample_ratio is not None, the parameter to determine whether or not to just take top K images
+            as the sample, OR to randomly select a subset of images from the data_dir
         """
         np.random.seed(42)
         self.data_dir = data_dir.rstrip('/')
@@ -102,8 +105,13 @@ class COCODataset(Dataset):
         if self.filetype == 'binary':
             if sample_ratio is not None:
                 num_imgs = int(sample_ratio * len(os.listdir(self.data_dir)))
-                rand_filepaths = np.random.choice(filepaths, num_imgs)
-                self.dataset = [np.load(fp) for fp in tqdm(rand_filepaths)]
+
+                if randomize:
+                    img_filepaths = np.random.choice(filepaths, num_imgs)
+                else:
+                    img_filepaths = filepaths[:num_imgs]
+
+                self.dataset = [np.load(fp) for fp in tqdm(img_filepaths)]
             else:
                 self.dataset = [np.load(fp) for fp in filepaths]
 
@@ -113,11 +121,10 @@ class COCODataset(Dataset):
             print('Converting jpg images to np images')
             np_imgs = [pool.apply(jpg_image_to_np_array, args=([jpg_file])) for jpg_file in tqdm(os.listdir(self.data_dir))]
             print('Resizing and padding np images')
-            resized = [pool.apply(resize_and_pad_img, args=([np_img])) for np_img in tqdm(np_imgs)]
+            resized = [pool.apply(resize_and_pad_img, args=([np_img])) for np_img in tqdm(np_images)]
             print('Normalizing images')
             normed = [pool.apply(normalize_img, args=([res])) for res in tqdm(resized)]
             pool.close()
-            self.dataset = normed
 
         else:
             raise ValueError('file type in data_dir must be np or jpg.')
