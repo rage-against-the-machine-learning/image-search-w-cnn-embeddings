@@ -11,19 +11,27 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-sys.path.append('../utils/')
-import aws_helper as awsh
+sys.path.append('../')
+from utils import aws_helper as awsh
 
 
 # GLOBAL VARIABLES ================================================= #
 data_split_to_use = 'train'
-with open('../dataset/categories.json', 'r') as f:
-    categories_of_interest = json.load(f)
+
+with open ('../dataset/categories.json', 'r') as j:
+    desired_categories = json.load(j)
+with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
+    imgid_by_supercat = json.load(f)
+# flatten to a list of imgids
+desired_img_ids = list(set([ii for img_id in list(imgid_by_supercat.values()) for ii in img_id]))
 
 # if 'api' is passed, then all images are retrieved from API
 # otherwise 'local' means all images will be fetched from local machine
 fetch_imgs_locally_or_api = 'local'
-local_img_directory = '../data/raw/train/train2014/'
+
+train_jpg_data_dir = '../data/raw/train/train2014/'
+train_np_data_dir = '../data/numpy_imgs/train_subset/'
+train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
 
 num_cpus = 32
 batch_size = 250
@@ -31,6 +39,10 @@ batch_size = 250
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
 local_np_dir = '../data/numpy_images/train/'
+
+with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
+    imgid_by_supercat = json.load(f)
+
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
 def resize_and_pad_img(img: np.ndarray, img_size: int = 224):
@@ -75,64 +87,44 @@ def jpg_image_to_np_array(jpg_filepath) -> np.ndarray:
 
 
 class COCODataset(Dataset):
+    def __init__(self,
+                 np_img_data_dir,
+                 annot_filepath,
+                 sample_ratio: float = None):
 
-    def __init__(self, data_dir: str, sample_ratio: int = None, randomize: bool = True):
-        """
-        :data_dir: data directory where images are stored (should be training or validation directory)
-        :sample_ratio: if training, a % of the total training/validation data you wish to try your model on
-            default is None, which means use all of the training or validation images in the specified data_dir
-        :randomize: default is True
-            when a sample_ratio is not None, the parameter to determine whether or not to just take top K images
-            as the sample, OR to randomly select a subset of images from the data_dir
-        """
-        np.random.seed(42)
-        self.data_dir = data_dir.rstrip('/')
+        self.np_img_data_dir = np_img_data_dir
 
-        rand_file = np.random.choice(os.listdir(self.data_dir))
-        filetype = rand_file.split('/')[-1].split('.')[-1]
+        self.sample_ratio = sample_ratio
+        self.coco = COCO(annot_filepath)
 
-        if filetype == 'np':
-            self.filetype = 'binary'
-        elif filetype == 'jpg' or filetype == 'jpeg':
-            self.filetype = 'raw'
+        # All possible image ids
+        all_train_img_ids = list(self.coco.imgs.keys())
+        # Filter down to the image ids applicable to our supercategories
+        self.ids = [ii for ii in all_train_img_ids if ii in desired_img_ids]
+
+        if self.sample_ratio is None:
+            pass
         else:
-            raise ValueError("data_dir does not hold acceptable image file type, must be either `.np`, `.jpg`, or `.jpeg`")
+            self.ids = list(np.random.choice(self.ids, int(self.sample_ratio * len(all_train_img_ids))))
 
-        filepaths = [f"{self.data_dir}/{fn}" for fn in os.listdir(self.data_dir)]
+        self.transform = transform
+        self.target_transform = target_transform
 
-        if self.filetype == 'binary':
-            if sample_ratio is not None:
-                num_imgs = int(sample_ratio * len(os.listdir(self.data_dir)))
+    def __getitem__(self, index):
+        coco = self.coco
 
-                if randomize:
-                    img_filepaths = np.random.choice(filepaths, num_imgs)
-                else:
-                    img_filepaths = filepaths[:num_imgs]
+        img_id = self.ids[index]
+        ann_ids = coco.getAnnIds(imgIds=[img_id])
+        target = coco.loadAnns(ann_ids)
 
-                self.dataset = [np.load(fp) for fp in tqdm(img_filepaths)]
-            else:
-                self.dataset = [np.load(fp) for fp in filepaths]
+        path = coco.loadImgs([img_id])[0]['file_name']
+        np_path = path.split('.')[0] + '.np'
+        img = np.load(os.path.join(self.np_img_data_dir, np_path))
 
-        elif self.filetype == 'jpg' or self.filetype == 'jpeg':
-            num_cpus = mp.cpu_count()
-            pool = mp.Pool(processes=num_cpus)
-            print('Converting jpg images to np images')
-            np_imgs = [pool.apply(jpg_image_to_np_array, args=([jpg_file])) for jpg_file in tqdm(os.listdir(self.data_dir))]
-            print('Resizing and padding np images')
-            resized = [pool.apply(resize_and_pad_img, args=([np_img])) for np_img in tqdm(np_imgs)]
-            print('Normalizing images')
-            normed = [pool.apply(normalize_img, args=([res])) for res in tqdm(resized)]
-            pool.close()
-            self.dataset = normed
-
-        else:
-            raise ValueError('file type in data_dir must be np or jpg.')
-
-    def __getitem__(self, index: int):
-        return self.dataset[index]
+        return img, target
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.ids)
 
 
 # WRAPPER MAIN FUNCTION ========================================== #
