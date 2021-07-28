@@ -1,12 +1,14 @@
 import json
 import multiprocessing as mp
 import os
+import shutil
 import sys
 
 import albumentations as alb
 import cv2
 import numpy as np
 from pycocotools.coco import COCO
+import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
@@ -32,8 +34,6 @@ fetch_imgs_locally_or_api = 'local'
 train_jpg_data_dir = '../data/raw/train/train2014/'
 train_np_data_dir = '../data/numpy_imgs/train_subset/'
 train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
-
-num_cpus = mp.cpu_count()
 
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
@@ -86,8 +86,16 @@ class COCODataset(Dataset):
     def __init__(self,
                  np_img_data_dir,
                  annot_filepath,
-                 sample_ratio: float = None):
-
+                 sample_ratio: float = None,
+                 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
+        """
+        :np_img_data_dir: local directory where you have unzipped np files saved 
+            np files are the trasnformed images from s3 that were normalized/ resized/ padded
+        :annot_filepath: filepath of the original coco dataset corresponding to the datasplit of your choosing
+        :sample_ratio: specified float between 0 and 1 for the % of images from the data split you want to use
+        :device: cpu or gpu
+        """
+        self.device = device
         self.np_img_data_dir = np_img_data_dir
 
         self.sample_ratio = sample_ratio
@@ -96,7 +104,7 @@ class COCODataset(Dataset):
         # All possible image ids
         all_train_img_ids = list(self.coco.imgs.keys())
         # Filter down to the image ids applicable to our supercategories
-        self.ids = [ii for ii in all_train_img_ids if ii in desired_img_ids]
+        self.ids = [ii for ii in tqdm(all_train_img_ids) if ii in desired_img_ids]
 
         if self.sample_ratio is None:
             pass
@@ -114,16 +122,42 @@ class COCODataset(Dataset):
         np_path = path.split('.')[0] + '.np'
         img = np.load(os.path.join(self.np_img_data_dir, np_path))
 
+        # Convert the image to tensor so it's compatible w/ pytorch data loader
+        img = torch.Tensor(img.transpose(2,0,1)).to(device=self.device).float()
+
         return img, target
 
     def __len__(self):
         return len(self.ids)
-
-
-def load_data (coco_dataset:COCODataset, batch_size: int, dataloader_params: dict = config_dataset.dataloader_params):
-    dataloader_params.update({'batch_size': batch_size})
-    dataloader_obj = DataLoader(coco_dataset, **dataloader_params)
-    return dataloader_obj
+    
+    
+def get_dataloader(dataset_obj,
+                   batch_size: int=100,
+                   device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                   loader_params:dict = config_dataset.dataloader_params):
+    """Returns data loader for custom dataset.
+    Args:
+        :dataset_obj: dataset object returned from COCODataset class
+        :batch_size: specified batch size, if you have memory errors while running, make this smaller
+        :device: default is CUDA if there is GPU otherwise CPU
+        :loader_params: default is found in config_dataset.py's dataloader_params dict
+            can specify your own data loader params, but collate_fn must be `lambda x: x`
+            specify:
+                shuffle: True / False
+                num_workers: number of parallel processes to run
+                collate_fn: lambda x: x
+    Returns:
+        data_loader: data loader for COCODataset.
+    """
+    # data loader for custom dataset
+    # this will return (imgs, targets) for each iteration
+    loader_params.update({'batch_size': batch_size})
+    
+    data_loader = DataLoader(
+        dataset=dataset_obj, 
+        **loader_params,
+    )
+    return data_loader
 
 
 # WRAPPER MAIN FUNCTION ========================================== #

@@ -37,8 +37,12 @@ $ jupyter notebook
 ├── metrics                 <-- model metrics
 │   ├── __init__.py
 │   └── similarity_metrics.py
-├── notebooks               <-- POC dev work
-│   └── COCO-Data-Exploration.ipynb
+├── notebooks
+│   ├── COCO-Data-Exploration.ipynb
+│   ├── COCO-Dataset-n-DataLoader.ipynb
+│   ├── COCO-Subset-Data.ipynb
+│   └── embeddings
+│       └── DenseNet.ipynb
 ├── requirements.txt
 └── utils                   <-- misc utility modules
     ├── __init__.py

@@ -1,4 +1,4 @@
-import multiprocessing as mp
+import torch.multiprocessing as mp
 
 
 train_annotation_filepath = '../data/raw/train/annotations/instances_train2014.json'
@@ -12,7 +12,7 @@ img_filedir = {
 }
 
 dataloader_params = {
-    shuffle: False,
-    num_workers: mp.cpu_count(),
-    collate_fn: lambda x: x
+    'shuffle': False,
+    'num_workers': mp.cpu_count(),
+    'collate_fn': lambda x: x
 }
