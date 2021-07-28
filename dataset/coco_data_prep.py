@@ -7,15 +7,19 @@ import sys
 import albumentations as alb
 import cv2
 import numpy as np
+from pycocotools.coco import COCO
 import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
+import config_dataset
 sys.path.append('../')
 from utils import aws_helper as awsh
 
 
 # GLOBAL VARIABLES ================================================= #
+device = torch.device('cpu')
+
 with open ('../dataset/categories.json', 'r') as j:
     desired_categories = json.load(j)
 with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
@@ -90,6 +94,7 @@ class COCODataset(Dataset):
                  annot_filepath,
                  sample_ratio: float = None):
 
+        self.device = device
         self.np_img_data_dir = np_img_data_dir
 
         self.sample_ratio = sample_ratio
@@ -98,7 +103,7 @@ class COCODataset(Dataset):
         # All possible image ids
         all_train_img_ids = list(self.coco.imgs.keys())
         # Filter down to the image ids applicable to our supercategories
-        self.ids = [ii for ii in all_train_img_ids if ii in desired_img_ids]
+        self.ids = [ii for ii in tqdm(all_train_img_ids) if ii in desired_img_ids]
 
         if self.sample_ratio is None:
             pass
@@ -115,11 +120,36 @@ class COCODataset(Dataset):
         path = coco.loadImgs([img_id])[0]['file_name']
         np_path = path.split('.')[0] + '.np'
         img = np.load(os.path.join(self.np_img_data_dir, np_path))
+        
+        img = torch.Tensor(img.transpose(2,0,1)).to(device=self.device).float()
 
         return img, target
 
     def __len__(self):
         return len(self.ids)
+    
+    
+def get_dataloader(dataset_obj,
+                   batch_size: int=100,
+                   device=device,
+                   loader_params:dict = config_dataset.dataloader_params):
+    """Returns data loader for custom dataset.
+    Args:
+        dataset_path: path to pickled numpy dataset
+        device: Device in which data is loaded -- 'cpu' or 'cuda'
+        batch_size: mini-batch size.
+    Returns:
+        data_loader: data loader for custom dataset.
+    """
+    # data loader for custom dataset
+    # this will return (imgs, targets) for each iteration
+    loader_params.update({'batch_size': batch_size})
+    
+    data_loader = DataLoader(
+        dataset=dataset_obj, 
+        **loader_params,
+    )
+    return data_loader
 
 
 # WRAPPER MAIN FUNCTION ========================================== #
