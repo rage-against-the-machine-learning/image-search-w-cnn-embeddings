@@ -12,7 +12,7 @@ img_filedir = {
 }
 
 dataloader_params = {
-    'shuffle': True,
+    'shuffle': False,
     'num_workers': mp.cpu_count(),
     'collate_fn': lambda x: x
 }
