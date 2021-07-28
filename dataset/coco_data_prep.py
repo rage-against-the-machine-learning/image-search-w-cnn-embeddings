@@ -7,7 +7,6 @@ import sys
 import albumentations as alb
 import cv2
 import numpy as np
-from pycocotools.coco import COCO
 import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -17,8 +16,6 @@ from utils import aws_helper as awsh
 
 
 # GLOBAL VARIABLES ================================================= #
-data_split_to_use = 'train'
-
 with open ('../dataset/categories.json', 'r') as j:
     desired_categories = json.load(j)
 with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
@@ -26,16 +23,23 @@ with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
 # flatten to a list of imgids
 desired_img_ids = list(set([ii for img_id in list(imgid_by_supercat.values()) for ii in img_id]))
 
+# if 'api' is passed, then all images are retrieved from API
+# otherwise 'local' means all images will be fetched from local machine
+fetch_imgs_locally_or_api = 'local'
+
 train_jpg_data_dir = '../data/raw/train/train2014/'
 train_np_data_dir = '../data/numpy_imgs/train_subset/'
 train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
 
-num_cpus = mp.cpu_count()
+num_cpus = 32
 batch_size = 250
 
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
 local_np_dir = '../data/numpy_images/train/'
+
+with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
+    imgid_by_supercat = json.load(f)
 
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
@@ -118,14 +122,15 @@ class COCODataset(Dataset):
         return len(self.ids)
 
 
-# Creating Normalized & Resized Dataset ================================== #
+# WRAPPER MAIN FUNCTION ========================================== #
 def find(name, path):
     for root, dirs, files in os.walk(path):
         if name in files:
             return os.path.join(root, name)
 
 
-def convert_jpg_dataset_to_resized_normed_np_dataset():
+# main() function is to convert ALL jpeg images to numpy arrays
+def main():
     # TODO: Write code to efficiently fetch from API
     if fetch_imgs_locally_or_api == 'local':
         print('Getting filepaths from local directory')
