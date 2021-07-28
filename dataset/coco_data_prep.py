@@ -1,7 +1,6 @@
 import json
 import multiprocessing as mp
 import os
-import shutil
 import sys
 
 import albumentations as alb
@@ -34,15 +33,11 @@ train_jpg_data_dir = '../data/raw/train/train2014/'
 train_np_data_dir = '../data/numpy_imgs/train_subset/'
 train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
 
-num_cpus = 32
-batch_size = 250
+num_cpus = mp.cpu_count()
 
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
 local_np_dir = '../data/numpy_images/train/'
-
-with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
-    imgid_by_supercat = json.load(f)
 
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
