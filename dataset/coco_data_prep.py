@@ -7,10 +7,11 @@ import sys
 import albumentations as alb
 import cv2
 import numpy as np
-import torch
+from pycocotools.coco import COCO
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
+import config_dataset
 sys.path.append('../')
 from utils import aws_helper as awsh
 
@@ -107,9 +108,6 @@ class COCODataset(Dataset):
         else:
             self.ids = list(np.random.choice(self.ids, int(self.sample_ratio * len(all_train_img_ids))))
 
-        self.transform = transform
-        self.target_transform = target_transform
-
     def __getitem__(self, index):
         coco = self.coco
 
@@ -125,6 +123,12 @@ class COCODataset(Dataset):
 
     def __len__(self):
         return len(self.ids)
+
+
+def load_data (coco_dataset:COCODataset, batch_size: int, dataloader_params: dict = config_dataset.dataloader_params):
+    dataloader_params.update({'batch_size': batch_size})
+    dataloader_obj = DataLoader(coco_dataset, **dataloader_params)
+    return dataloader_obj
 
 
 # WRAPPER MAIN FUNCTION ========================================== #
