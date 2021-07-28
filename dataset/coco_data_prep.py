@@ -92,8 +92,15 @@ class COCODataset(Dataset):
     def __init__(self,
                  np_img_data_dir,
                  annot_filepath,
-                 sample_ratio: float = None):
-
+                 sample_ratio: float = None,
+                 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
+        """
+        :np_img_data_dir: local directory where you have unzipped np files saved 
+            np files are the trasnformed images from s3 that were normalized/ resized/ padded
+        :annot_filepath: filepath of the original coco dataset corresponding to the datasplit of your choosing
+        :sample_ratio: specified float between 0 and 1 for the % of images from the data split you want to use
+        :device: cpu or gpu
+        """
         self.device = device
         self.np_img_data_dir = np_img_data_dir
 
@@ -121,6 +128,7 @@ class COCODataset(Dataset):
         np_path = path.split('.')[0] + '.np'
         img = np.load(os.path.join(self.np_img_data_dir, np_path))
         
+        # Convert the image to tensor so it's compatible w/ pytorch data loader
         img = torch.Tensor(img.transpose(2,0,1)).to(device=self.device).float()
 
         return img, target
@@ -131,15 +139,21 @@ class COCODataset(Dataset):
     
 def get_dataloader(dataset_obj,
                    batch_size: int=100,
-                   device=device,
+                   device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
                    loader_params:dict = config_dataset.dataloader_params):
     """Returns data loader for custom dataset.
     Args:
-        dataset_path: path to pickled numpy dataset
-        device: Device in which data is loaded -- 'cpu' or 'cuda'
-        batch_size: mini-batch size.
+        :dataset_obj: dataset object returned from COCODataset class
+        :batch_size: specified batch size, if you have memory errors while running, make this smaller
+        :device: default is CUDA if there is GPU otherwise CPU
+        :loader_params: default is found in config_dataset.py's dataloader_params dict
+            can specify your own data loader params, but collate_fn must be `lambda x: x`
+            specify:
+                shuffle: True / False
+                num_workers: number of parallel processes to run
+                collate_fn: lambda x: x
     Returns:
-        data_loader: data loader for custom dataset.
+        data_loader: data loader for COCODataset.
     """
     # data loader for custom dataset
     # this will return (imgs, targets) for each iteration
