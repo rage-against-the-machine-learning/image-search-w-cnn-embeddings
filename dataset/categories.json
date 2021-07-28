@@ -1,25 +1,152 @@
-{
-  "person":1,
-  "airplane":5,
-  "boat":9,
-  "bench":14,
-  "parking meter":15,
-  "bear":19,
-  "horse":23,
-  "handbag":31,
-  "suitcase":33,
-  "snowboard":36,
-  "skateboard":41,
-  "cup":44,
-  "bottle":47,
-  "cake":52,
-  "banana":61,
-  "chair":62,
-  "couch":63,
-  "laptop":73,
-  "keyboard":76,
-  "toaster":80,
-  "sink":81,
-  "hair drier":89,
-  "toothbrush":90
-}
+[
+    {
+        "supercategory": "animal",
+        "id": 16,
+        "name": "bird"
+    },
+    {
+        "supercategory": "animal",
+        "id": 17,
+        "name": "cat"
+    },
+    {
+        "supercategory": "animal",
+        "id": 18,
+        "name": "dog"
+    },
+    {
+        "supercategory": "animal",
+        "id": 19,
+        "name": "horse"
+    },
+    {
+        "supercategory": "animal",
+        "id": 20,
+        "name": "sheep"
+    },
+    {
+        "supercategory": "animal",
+        "id": 21,
+        "name": "cow"
+    },
+    {
+        "supercategory": "animal",
+        "id": 22,
+        "name": "elephant"
+    },
+    {
+        "supercategory": "animal",
+        "id": 23,
+        "name": "bear"
+    },
+    {
+        "supercategory": "animal",
+        "id": 24,
+        "name": "zebra"
+    },
+    {
+        "supercategory": "animal",
+        "id": 25,
+        "name": "giraffe"
+    },
+    {
+        "supercategory": "sports",
+        "id": 34,
+        "name": "frisbee"
+    },
+    {
+        "supercategory": "sports",
+        "id": 35,
+        "name": "skis"
+    },
+    {
+        "supercategory": "sports",
+        "id": 36,
+        "name": "snowboard"
+    },
+    {
+        "supercategory": "sports",
+        "id": 37,
+        "name": "sports ball"
+    },
+    {
+        "supercategory": "sports",
+        "id": 38,
+        "name": "kite"
+    },
+    {
+        "supercategory": "sports",
+        "id": 39,
+        "name": "baseball bat"
+    },
+    {
+        "supercategory": "sports",
+        "id": 40,
+        "name": "baseball glove"
+    },
+    {
+        "supercategory": "sports",
+        "id": 41,
+        "name": "skateboard"
+    },
+    {
+        "supercategory": "sports",
+        "id": 42,
+        "name": "surfboard"
+    },
+    {
+        "supercategory": "sports",
+        "id": 43,
+        "name": "tennis racket"
+    },
+    {
+        "supercategory": "food",
+        "id": 52,
+        "name": "banana"
+    },
+    {
+        "supercategory": "food",
+        "id": 53,
+        "name": "apple"
+    },
+    {
+        "supercategory": "food",
+        "id": 54,
+        "name": "sandwich"
+    },
+    {
+        "supercategory": "food",
+        "id": 55,
+        "name": "orange"
+    },
+    {
+        "supercategory": "food",
+        "id": 56,
+        "name": "broccoli"
+    },
+    {
+        "supercategory": "food",
+        "id": 57,
+        "name": "carrot"
+    },
+    {
+        "supercategory": "food",
+        "id": 58,
+        "name": "hot dog"
+    },
+    {
+        "supercategory": "food",
+        "id": 59,
+        "name": "pizza"
+    },
+    {
+        "supercategory": "food",
+        "id": 60,
+        "name": "donut"
+    },
+    {
+        "supercategory": "food",
+        "id": 61,
+        "name": "cake"
+    }
+]

@@ -1,35 +1,44 @@
 import json
 import multiprocessing as mp
 import os
-from pathlib import Path
-import shutil
 import sys
 
 import albumentations as alb
 import cv2
 import numpy as np
+from pycocotools.coco import COCO
+from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-sys.path.append('../src/')
-import aws_helper as awsh
+import config_dataset
+sys.path.append('../')
+from utils import aws_helper as awsh
 
 
 # GLOBAL VARIABLES ================================================= #
 data_split_to_use = 'train'
-with open('../dataset/categories.json', 'r') as f:
-    categories_of_interest = json.load(f)
+
+with open ('../dataset/categories.json', 'r') as j:
+    desired_categories = json.load(j)
+with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
+    imgid_by_supercat = json.load(f)
+# flatten to a list of imgids
+desired_img_ids = list(set([ii for img_id in list(imgid_by_supercat.values()) for ii in img_id]))
 
 # if 'api' is passed, then all images are retrieved from API
 # otherwise 'local' means all images will be fetched from local machine
 fetch_imgs_locally_or_api = 'local'
-local_img_directory = '../data/raw/train/train2014/'
 
-num_cpus = 4
-batch_size = 250
+train_jpg_data_dir = '../data/raw/train/train2014/'
+train_np_data_dir = '../data/numpy_imgs/train_subset/'
+train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
+
+num_cpus = mp.cpu_count()
 
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
 local_np_dir = '../data/numpy_images/train/'
+
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
 def resize_and_pad_img(img: np.ndarray, img_size: int = 224):
@@ -63,12 +72,68 @@ def normalize_img(img: np.ndarray):
     return alb.Normalize(always_apply=True)(image=img).get('image')
 
 
+def jpg_image_to_np_array(jpg_filepath) -> np.ndarray:
+    """
+    :param jpg_filepath: filepath for a single jpg image
+    :return: np.array representation of image
+    """
+    cv2_img = cv2.imread(jpg_filepath)
+    np_img = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+    return np_img
+
+
+class COCODataset(Dataset):
+    def __init__(self,
+                 np_img_data_dir,
+                 annot_filepath,
+                 sample_ratio: float = None):
+
+        self.np_img_data_dir = np_img_data_dir
+
+        self.sample_ratio = sample_ratio
+        self.coco = COCO(annot_filepath)
+
+        # All possible image ids
+        all_train_img_ids = list(self.coco.imgs.keys())
+        # Filter down to the image ids applicable to our supercategories
+        self.ids = [ii for ii in all_train_img_ids if ii in desired_img_ids]
+
+        if self.sample_ratio is None:
+            pass
+        else:
+            self.ids = list(np.random.choice(self.ids, int(self.sample_ratio * len(all_train_img_ids))))
+
+    def __getitem__(self, index):
+        coco = self.coco
+
+        img_id = self.ids[index]
+        ann_ids = coco.getAnnIds(imgIds=[img_id])
+        target = coco.loadAnns(ann_ids)
+
+        path = coco.loadImgs([img_id])[0]['file_name']
+        np_path = path.split('.')[0] + '.np'
+        img = np.load(os.path.join(self.np_img_data_dir, np_path))
+
+        return img, target
+
+    def __len__(self):
+        return len(self.ids)
+
+
+def load_data (coco_dataset:COCODataset, batch_size: int, dataloader_params: dict = config_dataset.dataloader_params):
+    dataloader_params.update({'batch_size': batch_size})
+    dataloader_obj = DataLoader(coco_dataset, **dataloader_params)
+    return dataloader_obj
+
+
 # WRAPPER MAIN FUNCTION ========================================== #
 def find(name, path):
     for root, dirs, files in os.walk(path):
         if name in files:
             return os.path.join(root, name)
 
+
+# main() function is to convert ALL jpeg images to numpy arrays
 def main():
     # TODO: Write code to efficiently fetch from API
     if fetch_imgs_locally_or_api == 'local':
@@ -116,5 +181,5 @@ def main():
         i += batch_size
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

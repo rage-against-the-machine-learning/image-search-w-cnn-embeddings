@@ -16,3 +16,31 @@ $ python -m ipykernel install --user --name=cs7643-raml
 ```angular2html
 $ jupyter notebook
 ```
+
+### Repository Structure
+```markdown
+.
+├── README.md
+├── data                    <-- hidden directory (.gitignore)
+│   ├── interim
+│   ├── processed
+│   └── raw
+├── dataset                 <-- get, prep & transform image data 
+│   ├── __init__.py
+│   ├── categories.json
+│   ├── coco_api_helper.py
+│   ├── coco_data_prep.py.  <-- create torch.utils.data Dataset object compatible with DataLoader
+│   ├── config_dataset.py
+├── docs                    <-- relevant academic papers
+│   └── Deep-Image-Retrieval-ASurvey-2101.11282.pdf
+├── environment.yaml
+├── metrics                 <-- model metrics
+│   ├── __init__.py
+│   └── similarity_metrics.py
+├── notebooks               <-- POC dev work
+│   └── COCO-Data-Exploration.ipynb
+├── requirements.txt
+└── utils                   <-- misc utility modules
+    ├── __init__.py
+    └── aws_helper.py       <-- helper functions for S3, EC2
+```
