@@ -1,8 +1,8 @@
 ### Using this Repository:
 1. Setup your virtual environment
 ```angular2html
-$ conda env create -f environment.yml
-$ conda activate cs7643
+$ conda env create -f environment.yaml
+$ conda activate cs7643-raml
 $ pip install -r requirements.txt
 ```
 NOTE: If you are working on a separate branch and make any additional pip installations, be sure to **update the `requirements.txt` file**. 

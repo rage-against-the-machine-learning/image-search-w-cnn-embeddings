@@ -18,7 +18,7 @@ from utils import aws_helper as awsh
 
 
 # GLOBAL VARIABLES ================================================= #
-device = torch.device('cpu')
+data_split_to_use = 'train'
 
 with open ('../dataset/categories.json', 'r') as j:
     desired_categories = json.load(j)
@@ -35,15 +35,9 @@ train_jpg_data_dir = '../data/raw/train/train2014/'
 train_np_data_dir = '../data/numpy_imgs/train_subset/'
 train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
 
-num_cpus = 32
-batch_size = 250
-
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
 local_np_dir = '../data/numpy_images/train/'
-
-with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
-    imgid_by_supercat = json.load(f)
 
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
@@ -127,7 +121,7 @@ class COCODataset(Dataset):
         path = coco.loadImgs([img_id])[0]['file_name']
         np_path = path.split('.')[0] + '.np'
         img = np.load(os.path.join(self.np_img_data_dir, np_path))
-        
+
         # Convert the image to tensor so it's compatible w/ pytorch data loader
         img = torch.Tensor(img.transpose(2,0,1)).to(device=self.device).float()
 
