@@ -1,0 +1,30 @@
+0,16,bird
+1,17,cat
+2,18,dog
+3,19,horse
+4,20,sheep
+5,21,cow
+6,22,elephant
+7,23,bear
+8,24,zebra
+9,25,giraffe
+10,34,frisbee
+11,35,skis
+12,36,snowboard
+13,37,sports ball
+14,38,kite
+15,39,baseball bat
+16,40,baseball glove
+17,41,skateboard
+18,42,surfboard
+19,43,tennis racket
+20,52,banana
+21,53,apple
+22,54,sandwich
+23,55,orange
+24,56,broccoli
+25,57,carrot
+26,58,hot dog
+27,59,pizza
+28,60,donut
+29,61,cake
