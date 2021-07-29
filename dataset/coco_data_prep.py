@@ -194,7 +194,7 @@ class COCODataset(Dataset):
         
         # Target transformation needs to happen to extract bounding boxes from annots
         if self.target_transform is not None:
-            target = self.target_transform(target, width = 224, height = 224)
+            target = self.target_transform(target)
 
         return img, target
 
