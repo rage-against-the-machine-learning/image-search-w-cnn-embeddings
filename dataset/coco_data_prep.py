@@ -8,6 +8,7 @@ import albumentations as alb
 import cv2
 import numpy as np
 from pycocotools.coco import COCO
+import statistics
 import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -23,6 +24,7 @@ data_split_to_use = 'train'
 
 with open ('../dataset/categories.json', 'r') as j:
     desired_categories = json.load(j)
+ 
 with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
     imgid_by_supercat = json.load(f)
 # flatten to a list of imgids
@@ -125,18 +127,21 @@ class COCOAnnotationTransform(object):
         res = []
         for obj in target:
 
-            if 'bbox' in obj:
-                bbox = obj['bbox']
-                bbox[2] += bbox[0]
-                bbox[3] += bbox[1]
-                label_idx = self.label_map[obj['category_id']] # -1
-                final_box = list(np.array(bbox)/scale)
-                final_box.append(label_idx)
-                res += [final_box]  # [xmin, ymin, xmax, ymax, label_idx]
+            if 'category_id' in obj:
+                label_idx = self.label_map[obj['category_id']] 
+                res += [int(label_idx)]  
+                res = [r for r in res if r in category_ids]
+                
+                if len(res) == 0:
+                    res = [99]
+                else:
+                    mode = statistics.mode(res)
+                    res = [mode]
+    
             else:
-                print("no bbox problem!")
+                print("no category problem!")
 
-        return res  # [[xmin, ymin, xmax, ymax, label_idx], ... ]
+        return res 
                 
 
 class COCODataset(Dataset):
