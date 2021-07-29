@@ -43,13 +43,15 @@ img_id_by_split = dict(
 # otherwise 'local' means all images will be fetched from local machine
 fetch_imgs_locally_or_api = 'local'
 
+# Filepaths
 train_jpg_data_dir = '../data/raw/train/train2014/'
 train_np_data_dir = '../data/numpy_imgs/train_subset/'
 train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
+category_label_filepath = 'coco_labels.txt'
+local_np_dir = '../data/numpy_images/train/'
 
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
-local_np_dir = '../data/numpy_images/train/'
 
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
@@ -99,19 +101,18 @@ def get_label_map(label_file):
     labels = open(label_file, 'r')
     for line in labels:
         ids = line.split(',')
-        label_map[int(ids[0])] = int(ids[1])
+        label_map[int(ids[1])] = int(ids[0])
     return label_map
 
 
 class COCOAnnotationTransform(object):
-    # https://github.com/amdegroot/ssd.pytorch/blob/master/data/coco.py
     """Transforms a COCO annotation into a Tensor of bbox coords and label index
     Initilized with a dictionary lookup of classnames to indexes
     """
     def __init__(self):
-        self.label_map = get_label_map(osp.join(COCO_ROOT, 'coco_labels.txt'))
+        self.label_map = get_label_map('../dataset/coco_labels.txt')
 
-    def __call__(self, target, width, height):
+    def __call__(self, target, width = 224, height = 224):
         """
         Args:
             target (dict): COCO target json annotation as a python dict
@@ -123,16 +124,19 @@ class COCOAnnotationTransform(object):
         scale = np.array([width, height, width, height])
         res = []
         for obj in target:
+
             if 'bbox' in obj:
                 bbox = obj['bbox']
                 bbox[2] += bbox[0]
                 bbox[3] += bbox[1]
-                label_idx = self.label_map[obj['category_id']] - 1
+                label_idx = self.label_map[obj['category_id']] # -1
                 final_box = list(np.array(bbox)/scale)
                 final_box.append(label_idx)
                 res += [final_box]  # [xmin, ymin, xmax, ymax, label_idx]
             else:
                 print("no bbox problem!")
+
+        return res  # [[xmin, ymin, xmax, ymax, label_idx], ... ]
                 
 
 class COCODataset(Dataset):
@@ -140,6 +144,7 @@ class COCODataset(Dataset):
                  data_split: str,
                  np_img_data_dir,
                  annot_filepath,
+                 target_transform = COCOAnnotationTransform,
                  sample_ratio: float = None,
                  device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
         """
@@ -160,6 +165,7 @@ class COCODataset(Dataset):
 
         self.sample_ratio = sample_ratio
         self.coco = COCO(annot_filepath)
+        self.target_transform = target_transform
 
         # All possible image ids
         all_img_ids = list(self.coco.imgs.keys())
@@ -185,6 +191,10 @@ class COCODataset(Dataset):
 
         # Convert the image to tensor so it's compatible w/ pytorch data loader
         img = torch.Tensor(img.transpose(2,0,1)).to(device=self.device).float()
+        
+        # Target transformation needs to happen to extract bounding boxes from annots
+        if self.target_transform is not None:
+            target = self.target_transform(target, width = 224, height = 224)
 
         return img, target
 
