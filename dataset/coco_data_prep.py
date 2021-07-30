@@ -130,13 +130,13 @@ class COCOAnnotationTransform(object):
             if 'category_id' in obj:
                 label_idx = self.label_map[obj['category_id']] 
                 res += [int(label_idx)]  
-                res = [r for r in res if r in category_ids]
+#                 res = [r for r in res if r in category_ids]
                 
-                if len(res) == 0:
-                    res = [99]
-                else:
-                    mode = statistics.mode(res)
-                    res = [mode]
+#                 if len(res) == 0:
+#                     res = [99]
+#                 else:
+                mode = statistics.mode(res)
+                res = [mode]
     
             else:
                 print("no category problem!")
