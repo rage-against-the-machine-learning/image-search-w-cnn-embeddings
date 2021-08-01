@@ -8,36 +8,54 @@ import albumentations as alb
 import cv2
 import numpy as np
 from pycocotools.coco import COCO
+import statistics
 import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
+import coco_api_helper
 import config_dataset
 sys.path.append('../')
 from utils import aws_helper as awsh
 
 
 # GLOBAL VARIABLES ================================================= #
-data_split_to_use = 'train'
+data_split_to_use = 'val'
+batch_size = 500
+num_cpus = 16
 
 with open ('../dataset/categories.json', 'r') as j:
     desired_categories = json.load(j)
+ 
 with open ('../dataset/imgs_by_supercategory.json', 'r') as f:
     imgid_by_supercat = json.load(f)
 # flatten to a list of imgids
-desired_img_ids = list(set([ii for img_id in list(imgid_by_supercat.values()) for ii in img_id]))
+train_img_ids = list(set([ii for img_id in list(imgid_by_supercat.values()) for ii in img_id]))
+
+# Validation image ids 
+category_ids = [cat['id'] for cat in desired_categories]
+valid_annot = coco_api_helper.coco_objects['valid']
+val_img_ids = [valid_annot.getImgIds(catIds=[id]) for id in category_ids]
+val_img_ids = list(set([i for ii in val_img_ids for i in ii]))
+
+img_id_by_split = dict(
+    train=train_img_ids,
+    val=val_img_ids
+)
 
 # if 'api' is passed, then all images are retrieved from API
 # otherwise 'local' means all images will be fetched from local machine
 fetch_imgs_locally_or_api = 'local'
 
-train_jpg_data_dir = '../data/raw/train/train2014/'
-train_np_data_dir = '../data/numpy_imgs/train_subset/'
-train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
+# Filepaths
+local_img_directory = '../data/raw/validation/val2014/'
+train_np_data_dir = '../data/numpy_imgs/val_subset/'
+train_annot_path = '../data/raw/train/annotations/instances_val2014.json'
+category_label_filepath = 'coco_labels.txt'
+local_np_dir = '../data/numpy_images/val/'
 
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
-local_np_dir = '../data/numpy_images/train/'
 
 
 # TRANSFORM FUNCTIONS TO RESIZE & NORMALIZE ======================= #
@@ -82,34 +100,83 @@ def jpg_image_to_np_array(jpg_filepath) -> np.ndarray:
     return np_img
 
 
+def get_label_map(label_file):
+    label_map = {}
+    labels = open(label_file, 'r')
+    for line in labels:
+        ids = line.split(',')
+        label_map[int(ids[1])] = int(ids[0])
+    return label_map
+
+
+class COCOAnnotationTransform(object):
+    """Transforms a COCO annotation into a Tensor of bbox coords and label index
+    Initilized with a dictionary lookup of classnames to indexes
+    """
+    def __init__(self):
+        self.label_map = get_label_map('../dataset/coco_labels.txt')
+
+    def __call__(self, target, width = 224, height = 224):
+        """
+        Args:
+            target (dict): COCO target json annotation as a python dict
+            height (int): height
+            width (int): width
+        Returns:
+            a list containing lists of bounding boxes  [bbox coords, class idx]
+        """
+        scale = np.array([width, height, width, height])
+        res = []
+        for obj in target:
+
+            if 'category_id' in obj:
+                label_idx = self.label_map[obj['category_id']] 
+                res += [int(label_idx)]  
+                mode = statistics.mode(res)
+                res = [mode]
+            else:
+                print("no category problem!")
+        return res 
+                
+
 class COCODataset(Dataset):
     def __init__(self,
+                 data_split: str,
                  np_img_data_dir,
                  annot_filepath,
+                 target_transform = COCOAnnotationTransform(),
                  sample_ratio: float = None,
                  device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
         """
+        :data_split: is one of 'train' or 'val' and the corresponding img ids will be fetched
         :np_img_data_dir: local directory where you have unzipped np files saved 
             np files are the trasnformed images from s3 that were normalized/ resized/ padded
         :annot_filepath: filepath of the original coco dataset corresponding to the datasplit of your choosing
         :sample_ratio: specified float between 0 and 1 for the % of images from the data split you want to use
         :device: cpu or gpu
         """
+        if data_split not in ['train', 'val']:
+            raise ValueError("data_split param must be one of 'train', or 'val'")
+        else:
+            self.data_split = data_split
+            
         self.device = device
         self.np_img_data_dir = np_img_data_dir
 
         self.sample_ratio = sample_ratio
         self.coco = COCO(annot_filepath)
+        self.target_transform = target_transform
 
         # All possible image ids
-        all_train_img_ids = list(self.coco.imgs.keys())
+        all_img_ids = list(self.coco.imgs.keys())
         # Filter down to the image ids applicable to our supercategories
-        self.ids = [ii for ii in tqdm(all_train_img_ids) if ii in desired_img_ids]
+        img_ids_to_get = img_id_by_split.get(self.data_split)
+        self.ids = [ii for ii in tqdm(all_img_ids) if ii in img_ids_to_get]
 
         if self.sample_ratio is None:
             pass
         else:
-            self.ids = list(np.random.choice(self.ids, int(self.sample_ratio * len(all_train_img_ids))))
+            self.ids = list(np.random.choice(self.ids, int(self.sample_ratio * len(all_img_ids)), replace=False))
 
     def __getitem__(self, index):
         coco = self.coco
@@ -124,6 +191,10 @@ class COCODataset(Dataset):
 
         # Convert the image to tensor so it's compatible w/ pytorch data loader
         img = torch.Tensor(img.transpose(2,0,1)).to(device=self.device).float()
+        
+        # Target transformation needs to happen to extract bounding boxes from annots
+        if self.target_transform is not None:
+            target = self.target_transform(target)
 
         return img, target
 
@@ -215,5 +286,5 @@ def main():
         i += batch_size
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
