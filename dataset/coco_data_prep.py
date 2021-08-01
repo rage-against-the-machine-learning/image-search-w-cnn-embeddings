@@ -20,7 +20,9 @@ from utils import aws_helper as awsh
 
 
 # GLOBAL VARIABLES ================================================= #
-data_split_to_use = 'train'
+data_split_to_use = 'val'
+batch_size = 500
+num_cpus = 16
 
 with open ('../dataset/categories.json', 'r') as j:
     desired_categories = json.load(j)
@@ -46,11 +48,11 @@ img_id_by_split = dict(
 fetch_imgs_locally_or_api = 'local'
 
 # Filepaths
-train_jpg_data_dir = '../data/raw/train/train2014/'
-train_np_data_dir = '../data/numpy_imgs/train_subset/'
-train_annot_path = '../data/raw/train/annotations/instances_train2014.json'
+local_img_directory = '../data/raw/validation/val2014/'
+train_np_data_dir = '../data/numpy_imgs/val_subset/'
+train_annot_path = '../data/raw/train/annotations/instances_val2014.json'
 category_label_filepath = 'coco_labels.txt'
-local_np_dir = '../data/numpy_images/train/'
+local_np_dir = '../data/numpy_images/val/'
 
 s3_bucket = None
 s3_key_prefix = 'coco_train_np_imgs'
@@ -130,17 +132,10 @@ class COCOAnnotationTransform(object):
             if 'category_id' in obj:
                 label_idx = self.label_map[obj['category_id']] 
                 res += [int(label_idx)]  
-#                 res = [r for r in res if r in category_ids]
-                
-#                 if len(res) == 0:
-#                     res = [99]
-#                 else:
                 mode = statistics.mode(res)
                 res = [mode]
-    
             else:
                 print("no category problem!")
-
         return res 
                 
 
@@ -149,7 +144,7 @@ class COCODataset(Dataset):
                  data_split: str,
                  np_img_data_dir,
                  annot_filepath,
-                 target_transform = COCOAnnotationTransform,
+                 target_transform = COCOAnnotationTransform(),
                  sample_ratio: float = None,
                  device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
         """
@@ -291,5 +286,5 @@ def main():
         i += batch_size
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
