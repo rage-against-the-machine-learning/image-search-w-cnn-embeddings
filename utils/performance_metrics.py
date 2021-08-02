@@ -25,7 +25,7 @@ category_id2name = {cat['id']: cat['name'] for cat in val_coco.loadCats(val_coco
 def annoy_precision (annoy_obj, query_idx: int, idx2coco_map: dict,
                      n_neighbors: int = 10, at_k: int = 4):
     
-    closest = u.get_nns_by_item(query_idx, n_neighbors)
+    closest = annoy_obj.get_nns_by_item(query_idx, n_neighbors)
     closest_at_k = closest[1: at_k + 1]
     
     cocoids = [idx2coco_map.get(idx) for idx in closest]
