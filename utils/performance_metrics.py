@@ -54,8 +54,8 @@ def annoy_precision (annoy_obj, query_idx: int, idx2coco_map: dict,
     cat_matches = np.sum([1 if l == ground_truth_label else 0 for l in cat_labels][1: at_k + 1])
     supercat_matches = np.sum([1 if l == ground_truth_supercat else 0 for l in supercat_labels][1: at_k + 1])
     
-    cat_precision_at_k = cat_matches / n_neighbors
-    supercat_precision_at_k = supercat_matches / n_neighbors
+    cat_precision_at_k = cat_matches / at_k
+    supercat_precision_at_k = supercat_matches / at_k
         
     return cat_precision_at_k, supercat_precision_at_k
 
