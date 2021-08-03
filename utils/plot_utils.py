@@ -25,11 +25,6 @@ class EmbeddingPlotter:
         self.cat_id_to_name_dict = {cat['id']: cat['name'] for cat in cats}
         self.img_ids = list(idx2Img.values())
         self.annIds = self.coco.getAnnIds(self.img_ids)
-        #self.labels = [self.coco.loadAnns(self.annIds)]
-        
-        
-        
-        
         self.embeddings = embeddings
         self.idx2Img = idx2Img
         self.labels = []
@@ -37,18 +32,11 @@ class EmbeddingPlotter:
             ann_ids_to_append = self.coco.getAnnIds(self.idx2Img[k])
             anns_to_append = self.coco.loadAnns(ann_ids_to_append)
             self.labels.append(anns_to_append)
-            
-        
+               
         self.category_labels=[]
-        # self.category_multi_labels = []
-        # self.category_multi_labels_counts = []
         self.supercategory_labels = []
-        # self.supercategory_multi_labels = []
-        # self.supercategory_multi_labels_counts = []
         
-        
- 
-        
+   
         cats_dict = {cat['id']: cat for cat in cats}
         for label in self.labels:
             
@@ -59,10 +47,6 @@ class EmbeddingPlotter:
                 for annotation in label:
                     categories.append(cats_dict[annotation['category_id']]['name'])
                     supercategories.append(cats_dict[annotation['category_id']]['supercategory'])
-                # self.category_multi_labels_counts.append(categories)
-                # self.category_multi_labels.append(list(set(categories)))
-                # self.supercategory_multi_labels.append(list(set(supercategories)))
-                # self.supercategory_multi_labels_counts.append(supercategories)
         
                 # most common category among objects in the picture
                 category, _ = Counter(categories).most_common(1)[0]
@@ -71,10 +55,6 @@ class EmbeddingPlotter:
                 self.category_labels.append(category)
                 self.supercategory_labels.append(supercategory)
             else:
-                # self.supercategory_multi_labels.append([])
-                # self.supercategory_multi_labels_counts.append([])
-                # self.category_multi_labels.append([])
-                # self.category_multi_labels_counts.append([])
                 self.category_labels.append(None)
                 self.supercategory_labels.append(None)
         
@@ -122,13 +102,13 @@ class EmbeddingPlotter:
             plt.subplots_adjust(top=0.90)
         plt.show()
         
-    def plot_neighbors(self, X_idx, nbrs, show_annotations=False):
+    def plot_neighbors(self, X_idx, nbrs, k=5, show_annotations=False):
         idx2Img = self.idx2Img
         embeddings = self.embeddings
         m, n = np.shape(embeddings)
         img_id = idx2Img[X_idx]
         
-        distances, indices = nbrs.kneighbors(embeddings[X_idx, :].reshape(1, n), 16)
+        distances, indices = nbrs.kneighbors(embeddings[X_idx, :].reshape(1, n), k)
         distances, indices = distances[0], indices[0]
         neighbors_ids = np.array(list(map(idx2Img.get, indices)))
         np.insert(neighbors_ids, 0, img_id)
@@ -136,10 +116,7 @@ class EmbeddingPlotter:
         
         title_suffix = np.array([f'distance={distance:.2f}' for distance in distances])
         figtitle=f'Neighbors of {img_id}'
-        self.plot_coco_images(neighbors_ids.reshape(4, 4).tolist(), 
-                         title_suffix=title_suffix.reshape(4,4),
-                         show_annotations=show_annotations,
-                         figtitle=figtitle)
+        self.plot_coco_images([neighbors_ids.tolist()])
         
     def plot_3d(self, X, title=None, columns=['x0', 'x1', 'x2'], **kwargs):
         labels = self.supercategory_labels
