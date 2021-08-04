@@ -17,6 +17,13 @@ $ python -m ipykernel install --user --name=cs7643-raml
 $ jupyter notebook
 ```
 
+### Project Group 129 
+- Michael Aldridge
+- Madhuri Jamma
+- Sylvai Tran
+- Yufeng Wang
+
+
 ### Repository Structure
 ```markdown
 .
