@@ -3,6 +3,7 @@ albumentations==0.5.0
 boto3==1.17.10
 botocore==1.20.59
 faiss
+gc
 gca
 icecream
 ipywidgets
