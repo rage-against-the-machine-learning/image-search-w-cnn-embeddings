@@ -21,30 +21,36 @@ $ jupyter notebook
 ```markdown
 .
 ├── README.md
-├── data                    <-- hidden directory (.gitignore)
-│   ├── interim
-│   ├── processed
-│   └── raw
-├── dataset                 <-- get, prep & transform image data 
+├── dataset
 │   ├── __init__.py
-│   ├── categories.json
-│   ├── coco_api_helper.py
-│   ├── coco_data_prep.py.  <-- create torch.utils.data Dataset object compatible with DataLoader
-│   ├── config_dataset.py
-├── docs                    <-- relevant academic papers
-│   └── Deep-Image-Retrieval-ASurvey-2101.11282.pdf
+│   ├── categories.json     <-- subset of super categories & subcategories
+│   ├── coco_api_helper.py  <-- functions to help interact with pycocotools
+│   ├── coco_data_prep.py   <-- Dataset and DataLoader functions + preprocess
+│   ├── coco_labels.txt     <-- text file COCO categories
+│   ├── config_dataset.py   
+│   └── imgs_by_supercategory.json    <-- COCO image ids by super category
 ├── environment.yaml
-├── metrics                 <-- model metrics
-│   ├── __init__.py
-│   └── similarity_metrics.py
 ├── notebooks
 │   ├── COCO-Data-Exploration.ipynb
 │   ├── COCO-Dataset-n-DataLoader.ipynb
 │   ├── COCO-Subset-Data.ipynb
-│   └── embeddings
-│       └── DenseNet.ipynb
+│   ├── embeddings
+│   │   ├── DenseNet-all-validation-data.ipynb
+│   │   ├── Densenet-inspired-embeddings.ipynb
+│   │   └── DenseNet-inspired.ipynb
+│   └── retrieval
+│       ├── CNN_AutoEncoder-Embeddings-ANNOY.ipynb
+│       ├── Densenet-Embedding-NearestNeighbors.ipynb
+│       ├── DenseNet-Embeddings-ANNOY.ipynb
+│       ├── Densenet-Embeddings-FAISS.ipynb
+│       ├── Densenet-Inpsired-Embeddings-ANNOY.ipynb
+│       ├── Densenet-Inspired-Embedding-NearestNeighbors.ipynb
+│       ├── Densenet-Inspired-Embedding-Plotting-and-Eval.ipynb
+│       └── ResNet-Embedding-NearestNeighbors.ipynb
 ├── requirements.txt
-└── utils                   <-- misc utility modules
+└── utils
     ├── __init__.py
-    └── aws_helper.py       <-- helper functions for S3, EC2
+    ├── aws_helper.py       <-- helper functions for S3, EC2
+    ├── performance_metrics.py        <-- precision/recall functions
+    └── plot_utils.py       <-- plotting function helpers
 ```
