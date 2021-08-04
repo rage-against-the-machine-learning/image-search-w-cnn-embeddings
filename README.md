@@ -38,6 +38,15 @@ $ jupyter notebook
 │   │   ├── DenseNet-all-validation-data.ipynb
 │   │   ├── Densenet-inspired-embeddings.ipynb
 │   │   └── DenseNet-inspired.ipynb
+│   └── retrieval
+│       ├── CNN_AutoEncoder-Embeddings-ANNOY.ipynb
+│       ├── Densenet-Embedding-NearestNeighbors.ipynb
+│       ├── DenseNet-Embeddings-ANNOY.ipynb
+│       ├── Densenet-Embeddings-FAISS.ipynb
+│       ├── Densenet-Inpsired-Embeddings-ANNOY.ipynb
+│       ├── Densenet-Inspired-Embedding-NearestNeighbors.ipynb
+│       ├── Densenet-Inspired-Embedding-Plotting-and-Eval.ipynb
+│       └── ResNet-Embedding-NearestNeighbors.ipynb
 ├── requirements.txt
 └── utils
     ├── __init__.py
