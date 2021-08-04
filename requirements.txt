@@ -1,11 +1,17 @@
+annoy
 albumentations==0.5.0
 boto3==1.17.10
 botocore==1.20.59
+faiss
+gca
 icecream
 ipywidgets
+kneed
 opencv-python==4.5.3.56
 pandas
 pycocotools
 notebook
 scikit-image
+torchsummary
 tqdm==4.61.2
+umap-learn 
