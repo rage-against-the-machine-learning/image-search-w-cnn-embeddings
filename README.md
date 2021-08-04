@@ -30,23 +30,15 @@ $ jupyter notebook
 │   ├── config_dataset.py   
 │   └── imgs_by_supercategory.json    <-- COCO image ids by super category
 ├── environment.yaml
+├── models
+│   ├── densenet_inspired.py          <-- mini-DenseNet architecture
+│   └── resnet_modules.py             <-- ResNet-18 architecture
 ├── notebooks
 │   ├── COCO-Data-Exploration.ipynb
 │   ├── COCO-Dataset-n-DataLoader.ipynb
 │   ├── COCO-Subset-Data.ipynb
-│   ├── embeddings
-│   │   ├── DenseNet-all-validation-data.ipynb
-│   │   ├── Densenet-inspired-embeddings.ipynb
-│   │   └── DenseNet-inspired.ipynb
-│   └── retrieval
-│       ├── CNN_AutoEncoder-Embeddings-ANNOY.ipynb
-│       ├── Densenet-Embedding-NearestNeighbors.ipynb
-│       ├── DenseNet-Embeddings-ANNOY.ipynb
-│       ├── Densenet-Embeddings-FAISS.ipynb
-│       ├── Densenet-Inpsired-Embeddings-ANNOY.ipynb
-│       ├── Densenet-Inspired-Embedding-NearestNeighbors.ipynb
-│       ├── Densenet-Inspired-Embedding-Plotting-and-Eval.ipynb
-│       └── ResNet-Embedding-NearestNeighbors.ipynb
+│   ├── embeddings           <-- ipynbs for generating embeddings
+│   └── retrieval            <-- ipynbs for ANNOY, FAISS, and KNN
 ├── requirements.txt
 └── utils
     ├── __init__.py
