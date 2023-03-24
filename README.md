@@ -1,3 +1,10 @@
+### Project Abstract
+Content based image retrieval (CBIR) helps to find similar images in a large dataset, given a query image. The similarity between the images is computed, which is then used to rank them and return the top matching images. Instead of relying on labels to conduct a search, we seek to use image features learned from deep models to retrieve image embeddings. Subsequently, the embeddings are searched using nearest neighbor algorithms. State of the art approaches augment deep models originally designed for image classification to learn embeddings that can be used to retrieve similar images. We measured the performance of such models on CBIR, using image labels to compute precision and recall as evaluation metrics. Among these approaches included ResNeXt-WSL, a model proposed by Facebook AI Research, and DenseNet.
+
+Our goal is to build a simplified model to generate image embeddings that perform comparably well with these state of the art approaches. To compare to the transfer learning approaches, an Auto Encoder model, a simplified DenseNet model, and a ResNet variant were built and trained on the COCO 2014 dataset. Overall, our results demonstrate that effective CBIR can be accomplished using a variety of image embedding techniques that leverage deep learning, including models that are less complex than state of the art computer vision models.
+
+Please see the report findings here: https://github.com/rage-against-the-machine-learning/image-search-w-cnn-embeddings/blob/main/CS_7643_Project.pdf
+
 ### Using this Repository:
 1. Setup your virtual environment
 ```angular2html
